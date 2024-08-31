@@ -1,0 +1,84 @@
+name: Run Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: "Run golangci-lint"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Setup golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.60
+          args: --verbose
+
+  staticcheck:
+    needs: lint
+    name: "Run Staticcheck"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Run Staticcheck
+        uses: dominikh/staticcheck-action@v1
+        with:
+          version: "latest"
+
+  gosec:
+    needs: staticcheck
+    name: "Run Gosec Security Scanner"
+    runs-on: ubuntu-latest
+    env:
+      GO111MODULE: on
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Run Gosec Security Scanner
+        uses: securego/gosec@master
+        with:
+          args: ./...
+
+  unit-tests:
+    needs: gosec
+    name: "Run Unit Tests"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21.9'
+      - name: Run tests, benchmarks, vet, and coverage report
+        run: |
+          go test -cover -coverprofile=coverage.out ./... && \
+          go test -cover -bench . -benchmem ./... && \
+          go vet ./...
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          name: codecov-devbriefs-news
+          flags: unittests
+          token: ${{ secrets.CODECOV_TOKEN }}
