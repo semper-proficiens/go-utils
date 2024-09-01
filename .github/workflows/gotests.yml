@@ -54,9 +54,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Set up Go 1.23
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
-          go-version: 1.23
+          go-version: '>=1.23.0'
       - name: Run Gosec Security Scanner
         uses: securego/gosec@master
         with:
