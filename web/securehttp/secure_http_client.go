@@ -14,7 +14,7 @@ var systemCertPool = x509.SystemCertPool
 
 // CustomHTTPClientInterface defines the methods for the secure HTTP client.
 type CustomHTTPClientInterface interface {
-	Get(ctx context.Context, url string) (*http.Response, error)
+	Get(url string) (*http.Response, error)
 }
 
 // CustomHTTPClient is a struct that holds the HTTP client.
