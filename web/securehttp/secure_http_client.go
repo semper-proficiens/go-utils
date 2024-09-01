@@ -20,10 +20,11 @@ type CustomHTTPClientInterface interface {
 // CustomHTTPClient is a struct that holds the HTTP client.
 type CustomHTTPClient struct {
 	client *http.Client
+	ctx    context.Context
 }
 
-// NewSecureHTTPClient creates a new HTTP client with secure settings.
-func NewSecureHTTPClient() (*CustomHTTPClient, error) {
+// NewSecureHTTPClient creates a new HTTP client with secure settings based on a given context
+func NewSecureHTTPClient(ctx context.Context) (*CustomHTTPClient, error) {
 	// Load system CA certificates
 	rootCAs, err := systemCertPool()
 	if err != nil {
@@ -65,13 +66,14 @@ func NewSecureHTTPClient() (*CustomHTTPClient, error) {
 
 	return &CustomHTTPClient{
 		client: client,
+		ctx:    ctx,
 	}, nil
 }
 
 // Get is a utility function for making secure HTTP requests. This assumes "Content-Type" is json.
-func (sc *CustomHTTPClient) Get(ctx context.Context, url string) (*http.Response, error) {
+func (sc *CustomHTTPClient) Get(url string) (*http.Response, error) {
 	// Create a new HTTP request with context
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(sc.ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new HTTP request: %w", err)
 	}

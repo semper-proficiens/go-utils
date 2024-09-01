@@ -30,7 +30,11 @@ func (m *MockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func TestNewSecureHTTPClient(t *testing.T) {
-	client, err := NewSecureHTTPClient()
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	client, err := NewSecureHTTPClient(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}
@@ -50,18 +54,18 @@ func TestSecureHTTPClient_Get_Success(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	// Create a new secure HTTP client
-	client, err := NewSecureHTTPClient()
-	if err != nil {
-		t.Fatalf("Failed to create secure HTTP client: %v", err)
-	}
-
 	// Create a context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Create a new secure HTTP client
+	client, err := NewSecureHTTPClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create secure HTTP client: %v", err)
+	}
+
 	// Make a GET request
-	resp, err := client.Get(ctx, ts.URL)
+	resp, err := client.Get(ts.URL)
 	if err != nil {
 		t.Fatalf("Failed to make GET request: %v", err)
 	}
@@ -78,26 +82,30 @@ func TestSecureHTTPClient_Get_Success(t *testing.T) {
 }
 
 func TestSecureHTTPClient_Get_RequestError(t *testing.T) {
-	// Create a new secure HTTP client
-	client, err := NewSecureHTTPClient()
-	if err != nil {
-		t.Fatalf("Failed to create secure HTTP client: %v", err)
-	}
-
 	// Create a context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Create a new secure HTTP client
+	client, err := NewSecureHTTPClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create secure HTTP client: %v", err)
+	}
+
 	// Make a GET request with an invalid URL
-	_, err = client.Get(ctx, "http://invalid-url")
+	_, err = client.Get("http://invalid-url")
 	if err == nil {
 		t.Fatal("Expected error, got nil")
 	}
 }
 
 func TestSecureHTTPClient_Get_DoError(t *testing.T) {
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	// Create a new secure HTTP client with a mock transport
-	client, err := NewSecureHTTPClient()
+	client, err := NewSecureHTTPClient(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}
@@ -108,18 +116,18 @@ func TestSecureHTTPClient_Get_DoError(t *testing.T) {
 		},
 	}
 
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	// Make a GET request
-	_, err = client.Get(ctx, "http://example.com")
+	_, err = client.Get("http://example.com")
 	if err == nil {
 		t.Fatal("Expected error, got nil")
 	}
 }
 
 func TestSecureHTTPClient_Get_Non2xxStatusCode(t *testing.T) {
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	// Create a test server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -127,17 +135,13 @@ func TestSecureHTTPClient_Get_Non2xxStatusCode(t *testing.T) {
 	defer ts.Close()
 
 	// Create a new secure HTTP client
-	client, err := NewSecureHTTPClient()
+	client, err := NewSecureHTTPClient(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}
 
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	// Make a GET request
-	resp, err := client.Get(ctx, ts.URL)
+	resp, err := client.Get(ts.URL)
 	if err == nil {
 		t.Fatal("Expected error, got nil")
 	}
@@ -151,8 +155,12 @@ func TestSecureHTTPClient_Get_Non2xxStatusCode(t *testing.T) {
 }
 
 func TestNewSecureHTTPClient_SystemCertPoolError(t *testing.T) {
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	// This test will use the mock implementation of systemCertPool
-	client, err := NewSecureHTTPClient()
+	client, err := NewSecureHTTPClient(ctx)
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}
@@ -163,18 +171,18 @@ func TestNewSecureHTTPClient_SystemCertPoolError(t *testing.T) {
 }
 
 func TestSecureHTTPClient_Get_InvalidURL(t *testing.T) {
-	// Create a new secure HTTP client
-	client, err := NewSecureHTTPClient()
-	if err != nil {
-		t.Fatalf("Failed to create secure HTTP client: %v", err)
-	}
-
 	// Create a context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
+	// Create a new secure HTTP client
+	client, err := NewSecureHTTPClient(ctx)
+	if err != nil {
+		t.Fatalf("Failed to create secure HTTP client: %v", err)
+	}
+
 	// Make a GET request with an invalid URL format
-	_, err = client.Get(ctx, "http://%41:8080/") // Invalid URL
+	_, err = client.Get("http://%41:8080/") // Invalid URL
 	if err == nil {
 		t.Fatal("Expected error, got nil")
 	}
