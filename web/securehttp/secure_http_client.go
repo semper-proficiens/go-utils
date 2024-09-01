@@ -9,6 +9,9 @@ import (
 	"time"
 )
 
+// systemCertPool is a variable that points to x509.SystemCertPool by default.
+var systemCertPool = x509.SystemCertPool
+
 // CustomHTTPClientInterface defines the methods for the secure HTTP client.
 type CustomHTTPClientInterface interface {
 	Get(ctx context.Context, url string) (*http.Response, error)
@@ -22,7 +25,7 @@ type CustomHTTPClient struct {
 // NewSecureHTTPClient creates a new HTTP client with secure settings.
 func NewSecureHTTPClient() (*CustomHTTPClient, error) {
 	// Load system CA certificates
-	rootCAs, err := x509.SystemCertPool()
+	rootCAs, err := systemCertPool()
 	if err != nil {
 		rootCAs = x509.NewCertPool()
 	}

@@ -2,6 +2,7 @@ package securehttp
 
 import (
 	"context"
+	"crypto/x509"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -9,14 +10,15 @@ import (
 	"time"
 )
 
-//// MockCertPoolLoader is a mock implementation of CertPoolLoader.
-//type MockCertPoolLoader struct {
-//	LoadSystemCertPoolFunc func() (*x509.CertPool, error)
-//}
-//
-//func (m *MockCertPoolLoader) LoadSystemCertPool() (*x509.CertPool, error) {
-//	return m.LoadSystemCertPoolFunc()
-//}
+// mockSystemCertPool is a mock implementation of x509.SystemCertPool.
+func mockSystemCertPool() (*x509.CertPool, error) {
+	return nil, errors.New("mock error")
+}
+
+// init replaces the real SystemCertPool with the mock implementation.
+func init() {
+	systemCertPool = mockSystemCertPool
+}
 
 // MockTransport is custom transport for testing purposes.
 type MockTransport struct {
@@ -148,20 +150,35 @@ func TestSecureHTTPClient_Get_Non2xxStatusCode(t *testing.T) {
 	}
 }
 
-//func TestNewSecureHTTPClient_SystemCertPoolError(t *testing.T) {
-//	// Mock CertPoolLoader to return an error
-//	loader := &MockCertPoolLoader{
-//		LoadSystemCertPoolFunc: func() (*x509.CertPool, error) {
-//			return nil, errors.New("mock error")
-//		},
-//	}
-//
-//	client, err := NewSecureHTTPClient()
-//	if err != nil {
-//		t.Fatalf("Failed to create secure HTTP client: %v", err)
-//	}
-//
-//	if client == nil {
-//		t.Fatal("Expected non-nil client")
-//	}
-//}
+func TestNewSecureHTTPClient_SystemCertPoolError(t *testing.T) {
+	// This test will use the mock implementation of systemCertPool
+	client, err := NewSecureHTTPClient()
+	if err != nil {
+		t.Fatalf("Failed to create secure HTTP client: %v", err)
+	}
+
+	if client == nil {
+		t.Fatal("Expected non-nil client")
+	}
+}
+
+func TestSecureHTTPClient_Get_InvalidURL(t *testing.T) {
+	// Create a new secure HTTP client
+	client, err := NewSecureHTTPClient()
+	if err != nil {
+		t.Fatalf("Failed to create secure HTTP client: %v", err)
+	}
+
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Make a GET request with an invalid URL format
+	_, err = client.Get(ctx, "http://%41:8080/") // Invalid URL
+	if err == nil {
+		t.Fatal("Expected error, got nil")
+	}
+	if err.Error() != "error creating new HTTP request: parse \"http://%41:8080/\": invalid URL escape \"%41\"" {
+		t.Fatalf("Unexpected error message: %v", err)
+	}
+}
