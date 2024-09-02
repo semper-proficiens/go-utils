@@ -4,6 +4,11 @@ import (
 	"testing"
 )
 
+// MockArticle represents a mock article with a Title field.
+type MockArticle struct {
+	Title string
+}
+
 // TestCalculateSimilarity tests the CalculateSimilarity function.
 func TestCalculateSimilarity(t *testing.T) {
 	tests := []struct {
@@ -33,29 +38,29 @@ func TestCalculateSimilarity(t *testing.T) {
 
 func TestRemoveDuplicateKV(t *testing.T) {
 	// Test data
-	kv := []KeyValue{
-		{Key: "Title", Value: "Title Name1 Something"},
-		{Key: "Title", Value: "Title Name1 Something Something"},
-		{Key: "Title", Value: "Title Name2 Something"},
-		{Key: "Title", Value: "Title Name2 Something Something"},
+	articles := []MockArticle{
+		{Title: "Title Name1 Something"},
+		{Title: "Title Name1 Something Something"},
+		{Title: "Title Name2 Something"},
+		{Title: "Title Name2 Something Something"},
 	}
 
 	threshold := 0.6
-	expected := []KeyValue{
-		{Key: "Title", Value: "Title Name1 Something"},
+	expected := []MockArticle{
+		{Title: "Title Name1 Something"},
 	}
 
 	// Call the function
-	result := RemoveDuplicateKV(kv, threshold)
+	result := RemoveDuplicates(articles, threshold, "Title")
 
 	// Check the result
 	if len(result) != len(expected) {
 		t.Errorf("Expected %d unique key-value pairs, got %d", len(expected), len(result))
 	}
 
-	for i, kvPair := range expected {
-		if result[i].Key != kvPair.Key || result[i].Value != kvPair.Value {
-			t.Errorf("Expected key-value pair {\"%s\":\"%s\"}, but got {\"%s\":\"%s\"}", kvPair.Key, kvPair.Value, result[i].Key, result[i].Value)
+	for i, article := range expected {
+		if result[i].Title != article.Title {
+			t.Errorf("Expected article {\"%s\"}, but got {\"%s\"}", article.Title, result[i].Title)
 		}
 	}
 }

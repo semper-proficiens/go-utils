@@ -3,6 +3,7 @@ package nlp
 import (
 	"github.com/texttheater/golang-levenshtein/levenshtein"
 	"log"
+	"reflect"
 )
 
 // KeyValue represents a key-value pair.
@@ -21,25 +22,39 @@ func CalculateSimilarity(a, b string) float64 {
 	return 1.0 - float64(distance)/float64(maxLen)
 }
 
-// RemoveDuplicateKV removes duplicate key-value pairs based on a similarity threshold. This assumes all Keys in the
-// the KeyValue object are identical, so we only focus on the similarity of Value.
-func RemoveDuplicateKV(kv []KeyValue, threshold float64) []KeyValue {
-	var uniqueKV []KeyValue
+// RemoveDuplicates removes duplicate items from a slice based on a similarity threshold.
+// The fieldName parameter specifies the field to be used for similarity comparison.
+// e.g.
+//
+//	articles := []MockArticle{
+//			{Title: "Title Name1 Something"},
+//			{Title: "Title Name1 Something Something"},
+//			{Title: "Title Name2 Something"},
+//			{Title: "Title Name2 Something Something"},
+//		}
+//
+// => below will remove any articles where the key is title and similarity score is >= 0.6
+//
+// result := RemoveDuplicates(articles, 0.6, "Title")
+func RemoveDuplicates[T any](items []T, threshold float64, fieldName string) []T {
+	var uniqueItems []T
 
-	for i, kvPair := range kv {
+	for i, item := range items {
 		isDuplicate := false
 		for j := 0; j < i; j++ {
-			similarity := CalculateSimilarity(kvPair.Value, kv[j].Value)
+			value1 := reflect.ValueOf(item).FieldByName(fieldName).String()
+			value2 := reflect.ValueOf(items[j]).FieldByName(fieldName).String()
+			similarity := CalculateSimilarity(value1, value2)
 			if similarity >= threshold {
-				log.Printf("Excluded potential duplicate value \"%s\" and \"%s\" with similarity score %.2f", kvPair.Value, kv[j].Value, similarity)
+				log.Printf("Excluded potential duplicate value \"%s\" and \"%s\" with similarity score %.2f", value1, value2, similarity)
 				isDuplicate = true
 				break
 			}
 		}
 		if !isDuplicate {
-			uniqueKV = append(uniqueKV, kvPair)
+			uniqueItems = append(uniqueItems, item)
 		}
 	}
 
-	return uniqueKV
+	return uniqueItems
 }
