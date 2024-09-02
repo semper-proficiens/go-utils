@@ -21,7 +21,8 @@ func CalculateSimilarity(a, b string) float64 {
 	return 1.0 - float64(distance)/float64(maxLen)
 }
 
-// RemoveDuplicateKV removes duplicate key-value pairs based on a similarity threshold.
+// RemoveDuplicateKV removes duplicate key-value pairs based on a similarity threshold. This assumes all Keys in the
+// the KeyValue object are identical, so we only focus on the similarity of Value.
 func RemoveDuplicateKV(kv []KeyValue, threshold float64) []KeyValue {
 	var uniqueKV []KeyValue
 
