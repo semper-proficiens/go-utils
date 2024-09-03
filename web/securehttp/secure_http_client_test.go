@@ -1,13 +1,11 @@
 package securehttp
 
 import (
-	"context"
 	"crypto/x509"
 	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 // mockSystemCertPool is a mock implementation of x509.SystemCertPool.
@@ -30,11 +28,7 @@ func (m *MockTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func TestNewSecureHTTPClient(t *testing.T) {
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	client, err := NewSecureHTTPClient(ctx)
+	client, err := NewSecureHTTPClient()
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}
@@ -54,12 +48,8 @@ func TestSecureHTTPClient_Get_Success(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	// Create a new secure HTTP client
-	client, err := NewSecureHTTPClient(ctx)
+	client, err := NewSecureHTTPClient()
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}
@@ -82,12 +72,8 @@ func TestSecureHTTPClient_Get_Success(t *testing.T) {
 }
 
 func TestSecureHTTPClient_Get_RequestError(t *testing.T) {
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	// Create a new secure HTTP client
-	client, err := NewSecureHTTPClient(ctx)
+	client, err := NewSecureHTTPClient()
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}
@@ -100,12 +86,8 @@ func TestSecureHTTPClient_Get_RequestError(t *testing.T) {
 }
 
 func TestSecureHTTPClient_Get_DoError(t *testing.T) {
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	// Create a new secure HTTP client with a mock transport
-	client, err := NewSecureHTTPClient(ctx)
+	client, err := NewSecureHTTPClient()
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}
@@ -124,10 +106,6 @@ func TestSecureHTTPClient_Get_DoError(t *testing.T) {
 }
 
 func TestSecureHTTPClient_Get_Non2xxStatusCode(t *testing.T) {
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	// Create a test server
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -135,7 +113,7 @@ func TestSecureHTTPClient_Get_Non2xxStatusCode(t *testing.T) {
 	defer ts.Close()
 
 	// Create a new secure HTTP client
-	client, err := NewSecureHTTPClient(ctx)
+	client, err := NewSecureHTTPClient()
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}
@@ -155,12 +133,8 @@ func TestSecureHTTPClient_Get_Non2xxStatusCode(t *testing.T) {
 }
 
 func TestNewSecureHTTPClient_SystemCertPoolError(t *testing.T) {
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	// This test will use the mock implementation of systemCertPool
-	client, err := NewSecureHTTPClient(ctx)
+	client, err := NewSecureHTTPClient()
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}
@@ -171,12 +145,8 @@ func TestNewSecureHTTPClient_SystemCertPoolError(t *testing.T) {
 }
 
 func TestSecureHTTPClient_Get_InvalidURL(t *testing.T) {
-	// Create a context with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
 	// Create a new secure HTTP client
-	client, err := NewSecureHTTPClient(ctx)
+	client, err := NewSecureHTTPClient()
 	if err != nil {
 		t.Fatalf("Failed to create secure HTTP client: %v", err)
 	}

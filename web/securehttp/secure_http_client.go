@@ -1,7 +1,6 @@
 package securehttp
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -20,11 +19,10 @@ type CustomHTTPClientInterface interface {
 // CustomHTTPClient is a struct that holds the HTTP client.
 type CustomHTTPClient struct {
 	client *http.Client
-	ctx    context.Context
 }
 
-// NewSecureHTTPClient creates a new HTTP client with secure settings based on a given context
-func NewSecureHTTPClient(ctx context.Context) (*CustomHTTPClient, error) {
+// NewSecureHTTPClient creates a new HTTP client with secure settings
+func NewSecureHTTPClient() (*CustomHTTPClient, error) {
 	// Load system CA certificates
 	rootCAs, err := systemCertPool()
 	if err != nil {
@@ -54,26 +52,25 @@ func NewSecureHTTPClient(ctx context.Context) (*CustomHTTPClient, error) {
 		ForceAttemptHTTP2: true,
 		// Set other transport settings
 		MaxIdleConns:       100,
-		IdleConnTimeout:    90 * time.Second,
+		IdleConnTimeout:    60 * time.Second,
 		DisableCompression: false,
 	}
 
 	// Create and return the HTTP client with the custom transport
 	client := &http.Client{
 		Transport: transport,
-		Timeout:   10 * time.Second, // Set a timeout for the client
+		Timeout:   30 * time.Second,
 	}
 
 	return &CustomHTTPClient{
 		client: client,
-		ctx:    ctx,
 	}, nil
 }
 
 // Get is a utility function for making secure HTTP requests. This assumes "Content-Type" is json.
+// We're not setting a context for this request, we'll let the application handle concurrency, timeout, and such.
 func (sc *CustomHTTPClient) Get(url string) (*http.Response, error) {
-	// Create a new HTTP request with context
-	req, err := http.NewRequestWithContext(sc.ctx, "GET", url, nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating new HTTP request: %w", err)
 	}
