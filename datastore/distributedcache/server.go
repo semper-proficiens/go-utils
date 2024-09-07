@@ -15,13 +15,15 @@ type ServerOpts struct {
 
 type RaftServer struct {
 	ServerOpts
-	cache Cacher
+	followers map[net.Conn]struct{}
+	cache     Cacher
 }
 
 func NewRaftServer(opts ServerOpts, c Cacher) *RaftServer {
 	return &RaftServer{
 		ServerOpts: opts,
 		cache:      c,
+		followers:  make(map[net.Conn]struct{}),
 	}
 }
 
@@ -31,6 +33,17 @@ func (s *RaftServer) Start() error {
 		return fmt.Errorf("listen error: %w", err)
 	}
 	log.Printf("server starting on port [%s]\n", s.ListenAddr)
+
+	if !s.IsLeader {
+		go func() {
+			conn, err := net.Dial("tcp", s.LeaderAddr)
+			fmt.Println("connected with leader:", s.LeaderAddr)
+			if err != nil {
+				log.Fatal(err)
+			}
+			s.handleConn(conn)
+		}()
+	}
 	for {
 		// a break here means it stops accepting connections
 		conn, err := ln.Accept()
@@ -51,6 +64,8 @@ func (s *RaftServer) handleConn(conn net.Conn) {
 	}()
 
 	buff := make([]byte, 2048)
+
+	fmt.Println("connection made:", conn.RemoteAddr())
 	for {
 		// break conn if we can't read it
 		n, err := conn.Read(buff)
@@ -98,5 +113,12 @@ func (s *RaftServer) handleSetCmd(conn net.Conn, msg *Message) error {
 }
 
 func (s *RaftServer) sendToFollowers(ctx context.Context, msg *Message) error {
+	for conn := range s.followers {
+		_, err := conn.Write(msg.ToBytes())
+		if err != nil {
+			fmt.Println("write to follower error:", err)
+			continue
+		}
+	}
 	return nil
 }
