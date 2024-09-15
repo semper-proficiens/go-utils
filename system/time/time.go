@@ -7,7 +7,7 @@ import (
 
 // TimeUntilNextRun returns the duration until a given schedule hour and minute based on location.
 //
-// locations: "America/New_York" (EST), "America/ Los_Angeles" (PST), or "UTC". Use anything in IANA Time DB
+// locations: "America/New_York", "America/ Los_Angeles", or "UTC". Use anything in IANA Time DB
 //
 // scheduledHour: these are single int. e.g. For 6am, don't put 06, but 6.
 func TimeUntilNextRun(location string, scheduledHour, scheduledMin int) (time.Duration, error) {
